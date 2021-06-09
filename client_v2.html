@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatRoom</title>
+    <link rel="stylesheet" href="client.css">
+
+</head>
+
+<body>
+    <div id="login" align="center" style="margin: auto">
+        <form style="font-family: Helvetica, Arial, Sans, sans-serif; width: 400px">
+            <p style="color: #525271; font-weight: bold">Enter your name to join the session</p>
+            <input id="user_name" type="text" placeholder="Enter your name"/>
+            <button id="join" type="submit">Join</button>
+        </form>
+    </div>
+
+    <main style="display: none">
+        <header>
+            <div class="user-count">0</div>
+            <h1>Chat Room</h1>
+        </header>
+
+          <div id="chat_window" class="chat">
+
+          </div>
+          <form>
+            <input id="message_input" type="text" placeholder="Enter your message" />
+            <button id="send">Send</button>
+          </form>
+    </main>
+
+    <script>
+
+        // Mesajların gönderim zamanını hesapayan fonksiyon
+        const currentTime = function(){
+            const d = new Date()
+            return d.getHours() + ":" + d.getMinutes()
+        }
+
+        let user_name = ""
+
+        // Kullanıcı oturuma katılır.
+        document.getElementById("join").onclick = function(e){
+            e.preventDefault()
+
+            const chat_window = document.getElementById("chat_window")
+            const message_input = document.getElementById("message_input")
+            const send_button = document.getElementById("send")
+
+            message_input.focus()
+            user_name = document.getElementById("user_name").value
+            document.getElementById("login").remove()
+            document.querySelector("main").style.display = 'block'
+
+            const ws = new WebSocket("ws://127.0.0.1:5678") // Websocket'e bağlanılır (IP adresi sunucuya göre değiştirilecek)
+            ws.onopen = function (event){
+                ws.send(JSON.stringify({user: user_name})) // İlk bağlantıda sunucu tarafına kullanıcı adı gönderilir.
+            }
+            // Sunucu tarafına mesaj gönderimi
+            send_button.onclick = function (event){
+                event.preventDefault()
+                if (message_input.value.length != 0){
+                    ws.send(JSON.stringify({user: user_name, message: message_input.value}))
+                    message_input.value = ""
+                    message_input.focus()
+                }
+            }
+
+            // Gelen mesajlar sohbet penceresine eklenir
+            ws.onmessage = function(event){
+                let data = JSON.parse(event.data)
+                console.log(data)
+                if( "user_count" in data){ // Odada ki kullanıcı sayısı gösterilir.
+                    document.querySelector(".user-count").innerHTML = data.user_count
+                }
+                else if("user_join" in data){ // Yeni bir kullanıcı katıldı ise pencere de göstermek için
+                    chat_window.innerHTML += ('<p class="messageBox info"><span class="date">'+currentTime()+'</span> <span class="text">'+ data.user + ' ' +data.user_join+'</span></p>')
+                }
+                else{ // Kullanıcı mesajını göstermek için
+                    if (data.user == user_name){
+                        chat_window.innerHTML += ('<p class="messageBox self"><span class="date">'+currentTime()+'</span><span class="text">'+data.message+'</span></p>')
+                    }
+                    else{
+                        chat_window.innerHTML += ('<p class="messageBox friend"><span class="date">'+currentTime()+'</span> <span class="user">'+data.user+'</span>'+'<span class="text">'+data.message+'</span></p>')
+                    }
+                    chat_window.scrollTop = chat_window.scrollHeight
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>
