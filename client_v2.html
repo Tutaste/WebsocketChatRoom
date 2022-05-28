@@ -19,7 +19,6 @@
 
     <main style="display: none">
         <header>
-            <div class="user-count">0</div>
             <h1>Chat Room</h1>
         </header>
 
@@ -73,10 +72,7 @@
             ws.onmessage = function(event){
                 let data = JSON.parse(event.data)
                 console.log(data)
-                if( "user_count" in data){ // Odada ki kullanıcı sayısı gösterilir.
-                    document.querySelector(".user-count").innerHTML = data.user_count
-                }
-                else if("user_join" in data){ // Yeni bir kullanıcı katıldı ise pencere de göstermek için
+                if("user_join" in data){ // Yeni bir kullanıcı katıldı ise pencere de göstermek için
                     chat_window.innerHTML += ('<p class="messageBox info"><span class="date">'+currentTime()+'</span> <span class="text">'+ data.user + ' ' +data.user_join+'</span></p>')
                 }
                 else{ // Kullanıcı mesajını göstermek için
