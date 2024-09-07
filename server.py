@@ -13,6 +13,7 @@ async def register(websocket):
 #İstemcinin bağlantısı kesildiğinde mevcut kullanıcılar listesinden çıkarır. İstemciye odada kaç kişi olduğunu bildirir.
 async def unregister(websocket):
     clients.remove(websocket)
+    data = {"user_count": len(clients)}
     for client in clients:
         await client.send(json.dumps(data))
 
